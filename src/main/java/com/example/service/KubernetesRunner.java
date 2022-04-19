@@ -1,5 +1,6 @@
 package com.example.service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -12,6 +13,7 @@ import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.NamespaceStatus;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentList;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -32,15 +34,44 @@ public class KubernetesRunner implements CommandLineRunner {
         //getListOfPods("vcp-facilities");
 
         //Create namespace
-        //createNamespace("ingestion");
+        createNamespace("ingestion");
+
+        createDeploymentInNamespace("twinscan-scheduler-3205", "ingestion");
 
         //Get deployments for a namespace
-        getListOfDeployments("vcp-facilities");
+        //getListOfDeployments("vcp-facilities");
 
         //Check if Deployment is available
-        checkifDeploymentIsRunning("commercialoptionmanager", "vcp-facilities");
+        //checkifDeploymentIsRunning("commercialoptionmanager", "vcp-facilities");
 
     }
+
+    private void createDeploymentInNamespace(String deploymentName, String nameSpace){
+        System.out.println("Creating deployment " + deploymentName + " in namespace "+ nameSpace);
+
+        Deployment deployment = new DeploymentBuilder()
+                .withNewMetadata().withName(deploymentName).endMetadata()
+                .withNewSpec()
+                .withReplicas(2)
+                .withNewSelector()
+                .withMatchLabels(Collections.singletonMap("app", deploymentName))
+                .endSelector()
+                .withNewTemplate()
+                .withNewMetadata().addToLabels("app", deploymentName).endMetadata()
+                .withNewSpec()
+                .addNewContainer()
+                .withName("nginx")
+                .withImage("nginx:1.7.9")
+                .addNewPort().withContainerPort(80).endPort()
+                .endContainer()
+                .endSpec()
+                .endTemplate()
+                .endSpec()
+                .build();
+
+        kubernetesClient.apps().deployments().inNamespace(nameSpace).createOrReplace(deployment);
+        System.out.println("Created deployment " + deploymentName + " in namespace "+ nameSpace);
+   }
 
     private void checkifDeploymentIsRunning(String deploymentName, String namespace){
         System.out.println("Checking status for deployment " + deploymentName + " namespace "+ namespace);
@@ -73,7 +104,7 @@ public class KubernetesRunner implements CommandLineRunner {
     }
 
     private void createNamespace(String namespace){
-        Namespace ingestionNamespace = kubernetesClient.namespaces().create(new NamespaceBuilder()
+        Namespace ingestionNamespace = kubernetesClient.namespaces().createOrReplace(new NamespaceBuilder()
                 .withNewMetadata()
                 .withName(namespace)
                 .endMetadata()
