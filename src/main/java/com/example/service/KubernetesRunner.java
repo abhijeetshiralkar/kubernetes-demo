@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Namespace;
+import io.kubernetes.client.openapi.models.V1NamespaceList;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 
 @Component
@@ -118,13 +119,24 @@ public class KubernetesRunner implements CommandLineRunner {
     // }
     // }
 
-    private void createNamespace(String namespace) throws ApiException {
-        // Create namespace called ingestion
-        V1Namespace ingestionNamespace = new V1Namespace();
-        V1ObjectMeta namespaceMetaData = new V1ObjectMeta();
-        namespaceMetaData.setName(namespace);
-        ingestionNamespace.setMetadata(namespaceMetaData);
-        kubernetesApi.createNamespace(ingestionNamespace, null, null, null, null);
-        System.out.println("Namespace created successfully");
+    private void createNamespace(String namespace) {
+        try {
+            V1NamespaceList namespaceList = kubernetesApi.listNamespace(null, null, null, null, null, null, null, null, null, null);
+            // Check if namespace already exist before creating one
+            if (namespaceList.getItems().stream().filter(v1Namespace -> v1Namespace.getMetadata().getName().equals(namespace)).count() > 0) {
+                System.out.println("Namespace " + namespace + " already exists");
+            } else {
+                // Create namespace
+                V1Namespace ingestionNamespace = new V1Namespace();
+                V1ObjectMeta namespaceMetaData = new V1ObjectMeta();
+                namespaceMetaData.setName(namespace);
+                ingestionNamespace.setMetadata(namespaceMetaData);
+                kubernetesApi.createNamespace(ingestionNamespace, null, null, null, null);
+                System.out.println("Namespace created successfully");
+            }
+        } catch (ApiException e) {
+            System.out.println("Could not create namespace " + namespace);
+            e.printStackTrace();
+        }
     }
 }
