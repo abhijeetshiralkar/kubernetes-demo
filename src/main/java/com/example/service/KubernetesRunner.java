@@ -41,6 +41,7 @@ public class KubernetesRunner implements CommandLineRunner {
         // undeploy deployment
         // undeployDeploymentFromNameSpace("twinscan-scheduler-3205", "ingestion");
 
+
     }
 
     private void undeployDeploymentFromNameSpace(String deploymentName, String nameSpace) {
