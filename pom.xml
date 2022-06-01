@@ -35,6 +35,13 @@
             <version>15.0.1</version>
         </dependency>
 
+        <!-- Istio java client for creating istio services-->
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>istio-client</artifactId>
+            <version>5.12.2</version>
+        </dependency>
+
     </dependencies>
 
     <build>

@@ -6,6 +6,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
+import io.fabric8.istio.client.DefaultIstioClient;
+import io.fabric8.istio.client.IstioClient;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.util.Config;
@@ -30,6 +32,11 @@ public class KuberentesdemoApplication {
     @Bean
     AppsV1Api kubernetesAppsApi() throws IOException {
         return new AppsV1Api(Config.defaultClient());
+    }
+
+    @Bean
+    IstioClient kubernetesClient() {
+        return new DefaultIstioClient();
     }
 
 }
