@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 
 import io.kubernetes.client.openapi.ApiClient;
+import io.kubernetes.client.openapi.apis.AppsV1Api;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.util.Config;
 
@@ -18,14 +19,25 @@ import io.kubernetes.client.util.Config;
 @SpringBootApplication
 public class KuberentesdemoApplication {
 
+    private ApiClient kubernetesApiClient;
+
     public static void main(String[] args) {
         SpringApplication.run(KuberentesdemoApplication.class, args);
     }
 
     @Bean
+    ApiClient kubernetesApiClient() throws IOException {
+        return Config.defaultClient();
+    }
+
+    @Bean
     CoreV1Api kubernetesApi() throws IOException {
-        ApiClient client = Config.defaultClient();
-        return new CoreV1Api(client);
+        return new CoreV1Api(kubernetesApiClient);
+    }
+
+    @Bean
+    AppsV1Api kubernetesAppsApi() {
+        return new AppsV1Api(kubernetesApiClient);
     }
 
 }
