@@ -14,7 +14,6 @@ import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Capabilities;
-import io.kubernetes.client.openapi.models.V1ConfigMap;
 import io.kubernetes.client.openapi.models.V1ConfigMapEnvSource;
 import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1ContainerPort;
@@ -24,8 +23,6 @@ import io.kubernetes.client.openapi.models.V1EnvFromSource;
 import io.kubernetes.client.openapi.models.V1EnvVar;
 import io.kubernetes.client.openapi.models.V1HTTPGetAction;
 import io.kubernetes.client.openapi.models.V1LabelSelector;
-import io.kubernetes.client.openapi.models.V1Namespace;
-import io.kubernetes.client.openapi.models.V1NamespaceList;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1PodSpec;
 import io.kubernetes.client.openapi.models.V1PodTemplateSpec;
@@ -34,53 +31,14 @@ import io.kubernetes.client.openapi.models.V1ResourceRequirements;
 import io.kubernetes.client.openapi.models.V1SecurityContext;
 
 @Service
-public class DeploymentService {
+public class DeploymentManager {
 
     private final CoreV1Api kubernetesCoreApi;
     private final AppsV1Api kubernetesAppsApi;
 
-    public DeploymentService(final CoreV1Api kubernetesCoreApi, final AppsV1Api kubernetesAppsApi) {
+    public DeploymentManager(final CoreV1Api kubernetesCoreApi, final AppsV1Api kubernetesAppsApi, final NamespaceManager namespaceManager) {
         this.kubernetesCoreApi = kubernetesCoreApi;
         this.kubernetesAppsApi = kubernetesAppsApi;
-    }
-
-    public void createNamespace(final String namespace) {
-        System.out.println("Creating namespace " + namespace);
-        try {
-            final V1NamespaceList namespaceList = kubernetesCoreApi.listNamespace(null, null, null, null, null, null, null, null, null, null);
-            // Check if namespace already exist before creating one
-            if (namespaceList.getItems().stream().filter(v1Namespace -> v1Namespace.getMetadata().getName().equals(namespace)).count() > 0) {
-                System.out.println("Namespace " + namespace + " already exists");
-            } else {
-                // Create namespace
-                final V1Namespace ingestionNamespace = new V1Namespace();
-                final V1ObjectMeta namespaceMetaData = new V1ObjectMeta();
-                namespaceMetaData.setName(namespace);
-                ingestionNamespace.setMetadata(namespaceMetaData);
-                kubernetesCoreApi.createNamespace(ingestionNamespace, null, null, null, null);
-                System.out.println("Namespace created successfully");
-            }
-        } catch (final ApiException e) {
-            System.out.println("Could not create namespace " + namespace);
-            e.printStackTrace();
-        }
-    }
-
-    public void createconfigMap(final String namespace, final String configMapName) {
-        try {
-            final V1ConfigMap configMap = new V1ConfigMap();
-            final Map<String, String> configMapData = new HashMap<>();
-            configMapData.put("MONGO_URI", "mongodb://vcp:vcppassword@psmdb-db-rs0.mongodb.svc.cluster.local/admin?replicaSet=rs0&ssl=false");
-            configMapData.put("MONGO_WRITE_CONCERN", "majority");
-            configMap.setData(configMapData);
-            final V1ObjectMeta configMapMetaData = new V1ObjectMeta();
-            configMapMetaData.setName(configMapName);
-            configMap.setMetadata(configMapMetaData);
-            kubernetesCoreApi.createNamespacedConfigMap(namespace, configMap, null, null, null, null);
-        } catch (final ApiException e) {
-            System.out.println("Could not create configmap " + configMapName + " in namespace " + namespace);
-            e.printStackTrace();
-        }
     }
 
     public void createDeploymentInNamespace(final String deploymentName, final String nameSpace) {
