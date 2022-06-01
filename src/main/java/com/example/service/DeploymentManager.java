@@ -12,7 +12,6 @@ import io.kubernetes.client.custom.IntOrString;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.AppsV1Api;
-import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1Capabilities;
 import io.kubernetes.client.openapi.models.V1ConfigMapEnvSource;
 import io.kubernetes.client.openapi.models.V1Container;
@@ -33,11 +32,9 @@ import io.kubernetes.client.openapi.models.V1SecurityContext;
 @Service
 public class DeploymentManager {
 
-    private final CoreV1Api kubernetesCoreApi;
     private final AppsV1Api kubernetesAppsApi;
 
-    public DeploymentManager(final CoreV1Api kubernetesCoreApi, final AppsV1Api kubernetesAppsApi, final NamespaceManager namespaceManager) {
-        this.kubernetesCoreApi = kubernetesCoreApi;
+    public DeploymentManager(final AppsV1Api kubernetesAppsApi) {
         this.kubernetesAppsApi = kubernetesAppsApi;
     }
 
