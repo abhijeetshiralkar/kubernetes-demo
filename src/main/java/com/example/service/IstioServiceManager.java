@@ -32,7 +32,7 @@ public class IstioServiceManager {
                 .withMetadata(getIngressServiceMetaData(namespace)).withSpec(getIngressServiceSpec(serviceName))
                 .build();
 
-        istioClient.v1beta1().virtualServices().create(virtualService);
+        istioClient.v1beta1().virtualServices().createOrReplace(virtualService);
         System.out.println("Created service " + serviceName + " in namespace " + namespace);
     }
 
@@ -41,7 +41,7 @@ public class IstioServiceManager {
         final VirtualService virtualService = new VirtualServiceBuilder().withApiVersion("networking.istio.io/v1beta1").withKind("VirtualService")
                 .withMetadata(getVirtualServiceMetaData(namespace, serviceName)).withSpec(getVirtualServiceSpec(serviceName))
                 .build();
-        istioClient.v1beta1().virtualServices().create(virtualService);
+        istioClient.v1beta1().virtualServices().inNamespace(namespace).createOrReplace(virtualService);
         System.out.println("Created VirtualService " + serviceName + " in namespace " + namespace);
     }
 

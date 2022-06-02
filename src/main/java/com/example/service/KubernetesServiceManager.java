@@ -10,6 +10,7 @@ import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Service;
+import io.kubernetes.client.openapi.models.V1ServiceList;
 import io.kubernetes.client.openapi.models.V1ServicePort;
 import io.kubernetes.client.openapi.models.V1ServiceSpec;
 
@@ -30,12 +31,20 @@ public class KubernetesServiceManager {
             serviceBody.setKind("Service");
             serviceBody.setMetadata(getServiceMetaData(serviceName, namespace));
             serviceBody.setSpec(getServiceSpec(serviceName));
-            kubernetesCoreApi.createNamespacedService(namespace, serviceBody, null, null, null, null);
+            final V1ServiceList serviceList = kubernetesCoreApi.listNamespacedService(namespace, null, null, null, "metadata.name=systemcontext",
+                    null, null, null, null, null,
+                    null);
+            if (serviceList.getItems().size() > 0) {
+                System.out.println("Service " + serviceName + " already exists in namespace " + namespace);
+            } else {
+                kubernetesCoreApi.createNamespacedService(namespace, serviceBody, null, null, null, null);
+            }
+
+            System.out.println("Created service " + serviceName + " in namespace " + namespace);
         } catch (final ApiException e) {
             System.out.println("Could not create service " + serviceName + " in namespace " + namespace);
             e.printStackTrace();
         }
-        System.out.println("Created service " + serviceName + " in namespace " + namespace);
     }
 
     private V1ServiceSpec getServiceSpec(final String serviceName) {
