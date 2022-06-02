@@ -10,13 +10,16 @@ public class KubernetesRunner implements CommandLineRunner {
     private final NamespaceManager namespaceManager;
     private final ConfigMapManager configMapManager;
     private final KubernetesServiceManager kubernetesServiceManager;
+    private final IstioServiceManager istioServiceManager;
 
     public KubernetesRunner(final DeploymentManager deploymentManager, final NamespaceManager namespaceManager,
-            final ConfigMapManager configMapManager, final KubernetesServiceManager kubernetesServiceManager) {
+            final ConfigMapManager configMapManager, final KubernetesServiceManager kubernetesServiceManager,
+            final IstioServiceManager istioServiceManager) {
         this.deploymentManager = deploymentManager;
         this.namespaceManager = namespaceManager;
         this.configMapManager = configMapManager;
         this.kubernetesServiceManager = kubernetesServiceManager;
+        this.istioServiceManager = istioServiceManager;
     }
 
 
@@ -26,5 +29,6 @@ public class KubernetesRunner implements CommandLineRunner {
         configMapManager.createconfigMap("ingestion", "mongodb-cm");
         deploymentManager.createDeploymentInNamespace("systemcontext", "ingestion");
         kubernetesServiceManager.createKubernetesService("systemcontext", "ingestion");
+        istioServiceManager.createVirtualService("systemcontext", "ingestion");
     }
 }

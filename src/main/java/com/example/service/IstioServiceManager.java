@@ -1,10 +1,19 @@
 package com.example.service;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 
-import io.fabric8.istio.api.networking.v1alpha3.VirtualService;
-import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceBuilder;
-import io.fabric8.istio.api.networking.v1alpha3.VirtualServiceSpec;
+import io.fabric8.istio.api.networking.v1beta1.Destination;
+import io.fabric8.istio.api.networking.v1beta1.HTTPRetry;
+import io.fabric8.istio.api.networking.v1beta1.HTTPRoute;
+import io.fabric8.istio.api.networking.v1beta1.HTTPRouteDestination;
+import io.fabric8.istio.api.networking.v1beta1.PortSelector;
+import io.fabric8.istio.api.networking.v1beta1.VirtualService;
+import io.fabric8.istio.api.networking.v1beta1.VirtualServiceBuilder;
+import io.fabric8.istio.api.networking.v1beta1.VirtualServiceSpec;
 import io.fabric8.istio.client.IstioClient;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 
@@ -23,12 +32,52 @@ public class IstioServiceManager {
                 .withMetadata(getIngressServiceMetaData(namespace)).withSpec(getIngressServiceSpec(serviceName))
                 .build();
 
-        istioClient.v1alpha3().virtualServices().create(virtualService);
+        istioClient.v1beta1().virtualServices().create(virtualService);
         System.out.println("Created service " + serviceName + " in namespace " + namespace);
+    }
+
+    public void createVirtualService(final String serviceName, final String namespace) {
+        System.out.println("Creating VirtualService " + serviceName + " in namespace " + namespace);
+        final VirtualService virtualService = new VirtualServiceBuilder().withApiVersion("networking.istio.io/v1beta1").withKind("VirtualService")
+                .withMetadata(getVirtualServiceMetaData(namespace, serviceName)).withSpec(getVirtualServiceSpec(serviceName))
+                .build();
+        istioClient.v1beta1().virtualServices().create(virtualService);
+        System.out.println("Created VirtualService " + serviceName + " in namespace " + namespace);
+    }
+
+    private VirtualServiceSpec getVirtualServiceSpec(final String serviceName) {
+        final VirtualServiceSpec spec = new VirtualServiceSpec();
+        spec.setHosts(Collections.singletonList(serviceName));
+
+        final List<HTTPRoute> http = new ArrayList<>();
+        final HTTPRoute httpRoute = new HTTPRoute();
+        httpRoute.setTimeout("300s");
+
+        final List<HTTPRouteDestination> route = new ArrayList<>();
+        final HTTPRouteDestination routeDestination = new HTTPRouteDestination();
+        routeDestination.setDestination(new Destination(serviceName, new PortSelector(8080), null));
+        route.add(routeDestination);
+        httpRoute.setRoute(route);
+
+        httpRoute.setRetries(new HTTPRetry(3, "2s", null, null));
+
+        http.add(httpRoute);
+
+        spec.setHttp(http);
+        return spec;
+    }
+
+    private ObjectMeta getVirtualServiceMetaData(final String namespace, final String serviceName) {
+        final ObjectMeta metaData = new ObjectMeta();
+        metaData.setName(serviceName);
+        metaData.setNamespace(namespace);
+        return metaData;
     }
 
     private VirtualServiceSpec getIngressServiceSpec(final String serviceName) {
         final VirtualServiceSpec spec = new VirtualServiceSpec();
+        spec.setHosts(Collections.singletonList("10.246.15.246"));
+
         return spec;
     }
 
@@ -38,5 +87,6 @@ public class IstioServiceManager {
         metaData.setNamespace(namespace);
         return metaData;
     }
+
 
 }
