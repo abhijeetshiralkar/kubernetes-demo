@@ -17,6 +17,7 @@ import io.kubernetes.client.openapi.models.V1ConfigMapEnvSource;
 import io.kubernetes.client.openapi.models.V1Container;
 import io.kubernetes.client.openapi.models.V1ContainerPort;
 import io.kubernetes.client.openapi.models.V1Deployment;
+import io.kubernetes.client.openapi.models.V1DeploymentList;
 import io.kubernetes.client.openapi.models.V1DeploymentSpec;
 import io.kubernetes.client.openapi.models.V1EnvFromSource;
 import io.kubernetes.client.openapi.models.V1EnvVar;
@@ -47,13 +48,24 @@ public class DeploymentManager {
             body.setKind("Deployment");
             body.setMetadata(getDeploymentMetaData(deploymentName));
             body.setSpec(getDeploymentSpec(deploymentName));
-            kubernetesAppsApi.createNamespacedDeployment(nameSpace, body, null, null, null, null);
+            final V1DeploymentList v1DeploymentList = kubernetesAppsApi.listNamespacedDeployment(nameSpace, null, null, null,
+                    "metadata.name=systemcontext",
+                    null, null, null, null, null,
+                    null);
+            if (v1DeploymentList.getItems().size() > 0) {
+                System.out.println("Deployment with name " + deploymentName + " in namespace" + nameSpace + "already exists");
+            } else {
+                kubernetesAppsApi.createNamespacedDeployment(nameSpace, body, null, null, null, null);
+            }
         } catch (final ApiException e) {
             System.out.println("Could not create deployment " + deploymentName + " in namespace " + nameSpace);
             e.printStackTrace();
         }
 
         System.out.println("Created deployment " + deploymentName + " in namespace " + nameSpace);
+    }
+
+    public void deleteDeploymentInNamespace(final String systemcontext, final String ingestion) {
     }
 
     private V1DeploymentSpec getDeploymentSpec(final String deploymentName) {

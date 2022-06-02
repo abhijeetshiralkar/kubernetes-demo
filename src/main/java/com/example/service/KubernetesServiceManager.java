@@ -35,16 +35,18 @@ public class KubernetesServiceManager {
                     null, null, null, null, null,
                     null);
             if (serviceList.getItems().size() > 0) {
-                System.out.println("Service " + serviceName + " already exists in namespace " + namespace);
+                System.out.println("Service " + serviceName + " already exists in namespace " + namespace + " replacing it");
             } else {
                 kubernetesCoreApi.createNamespacedService(namespace, serviceBody, null, null, null, null);
+                System.out.println("Created service " + serviceName + " in namespace " + namespace);
             }
-
-            System.out.println("Created service " + serviceName + " in namespace " + namespace);
         } catch (final ApiException e) {
             System.out.println("Could not create service " + serviceName + " in namespace " + namespace);
             e.printStackTrace();
         }
+    }
+
+    public void deleteKubernetesService(final String systemcontext, final String ingestion) {
     }
 
     private V1ServiceSpec getServiceSpec(final String serviceName) {

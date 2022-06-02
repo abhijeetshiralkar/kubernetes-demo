@@ -29,6 +29,22 @@ public class KubernetesRunner implements CommandLineRunner {
         namespaceManager.createNamespace("ingestion");
         // Create configmap if it doesnot exist. If it exists replace it
         configMapManager.createconfigMap("ingestion", "mongodb-cm");
+
+        // Cleanup deployments and services
+        performCleanup();
+
+        // Create depployments and services
+        performDeployment();
+    }
+
+    private void performCleanup() {
+        deploymentManager.deleteDeploymentInNamespace("systemcontext", "ingestion");
+        kubernetesServiceManager.deleteKubernetesService("systemcontext", "ingestion");
+        istioServiceManager.deleteVirtualService("systemcontext", "ingestion");
+        istioServiceManager.deleteIngressService("systemcontext", "ingestion");
+    }
+
+    private void performDeployment() {
         // Create deployment
         deploymentManager.createDeploymentInNamespace("systemcontext", "ingestion");
         // create service

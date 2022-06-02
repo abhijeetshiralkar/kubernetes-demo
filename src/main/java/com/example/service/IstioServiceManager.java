@@ -48,6 +48,12 @@ public class IstioServiceManager {
         System.out.println("Created VirtualService " + serviceName + " in namespace " + namespace);
     }
 
+    public void deleteVirtualService(final String systemcontext, final String ingestion) {
+    }
+
+    public void deleteIngressService(final String systemcontext, final String ingestion) {
+    }
+
     private VirtualServiceSpec getVirtualServiceSpec(final String serviceName) {
         final VirtualServiceSpec spec = new VirtualServiceSpec();
         spec.setHosts(Collections.singletonList(serviceName));
