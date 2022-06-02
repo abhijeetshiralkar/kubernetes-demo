@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.V1ConfigMap;
+import io.kubernetes.client.openapi.models.V1ConfigMapList;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 
 @Service
@@ -29,7 +30,17 @@ public class ConfigMapManager {
             final V1ObjectMeta configMapMetaData = new V1ObjectMeta();
             configMapMetaData.setName(configMapName);
             configMap.setMetadata(configMapMetaData);
-            kubernetesCoreApi.createNamespacedConfigMap(namespace, configMap, null, null, null, null);
+            final V1ConfigMapList configMapList = kubernetesCoreApi.listNamespacedConfigMap(namespace, null, null, null, "metadata.name="
+                    + configMapName,
+                    null, null, null, null, null,
+                    null);
+            if (configMapList.getItems().size() > 0) {
+                System.out.println("Config map already exist with name=" + configMapName + " in namespace " + namespace + " replacing it");
+                kubernetesCoreApi.replaceNamespacedConfigMap(configMapName, namespace, configMap, null, null, null, null);
+                System.out.println("Replaced Config map with name=" + configMapName + " in namespace " + namespace);
+            } else {
+                kubernetesCoreApi.createNamespacedConfigMap(namespace, configMap, null, null, null, null);
+            }
         } catch (final ApiException e) {
             System.out.println("Could not create configmap " + configMapName + " in namespace " + namespace);
             e.printStackTrace();

@@ -25,10 +25,17 @@ public class KubernetesRunner implements CommandLineRunner {
 
     @Override
     public void run(final String... args) throws Exception {
+        // Create namespace if it doesnot exist
         namespaceManager.createNamespace("ingestion");
+        // Create configmap if it doesnot exist. If it exists replace it
         configMapManager.createconfigMap("ingestion", "mongodb-cm");
+        // Create deployment
         deploymentManager.createDeploymentInNamespace("systemcontext", "ingestion");
+        // create service
         kubernetesServiceManager.createKubernetesService("systemcontext", "ingestion");
+        // Create or replace virtual service
         istioServiceManager.createVirtualService("systemcontext", "ingestion");
+        // Create or replace virtual service
+        istioServiceManager.createIngressService("systemcontext", "ingestion");
     }
 }

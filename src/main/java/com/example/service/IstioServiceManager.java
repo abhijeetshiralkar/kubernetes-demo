@@ -7,10 +7,13 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import io.fabric8.istio.api.networking.v1beta1.Destination;
+import io.fabric8.istio.api.networking.v1beta1.HTTPMatchRequest;
 import io.fabric8.istio.api.networking.v1beta1.HTTPRetry;
 import io.fabric8.istio.api.networking.v1beta1.HTTPRoute;
 import io.fabric8.istio.api.networking.v1beta1.HTTPRouteDestination;
 import io.fabric8.istio.api.networking.v1beta1.PortSelector;
+import io.fabric8.istio.api.networking.v1beta1.StringMatch;
+import io.fabric8.istio.api.networking.v1beta1.StringMatchRegex;
 import io.fabric8.istio.api.networking.v1beta1.VirtualService;
 import io.fabric8.istio.api.networking.v1beta1.VirtualServiceBuilder;
 import io.fabric8.istio.api.networking.v1beta1.VirtualServiceSpec;
@@ -32,8 +35,8 @@ public class IstioServiceManager {
                 .withMetadata(getIngressServiceMetaData(namespace)).withSpec(getIngressServiceSpec(serviceName))
                 .build();
 
-        istioClient.v1beta1().virtualServices().createOrReplace(virtualService);
-        System.out.println("Created service " + serviceName + " in namespace " + namespace);
+        istioClient.v1beta1().virtualServices().inNamespace(namespace).createOrReplace(virtualService);
+        System.out.println("Created Ingress service " + serviceName + " in namespace " + namespace);
     }
 
     public void createVirtualService(final String serviceName, final String namespace) {
@@ -77,7 +80,25 @@ public class IstioServiceManager {
     private VirtualServiceSpec getIngressServiceSpec(final String serviceName) {
         final VirtualServiceSpec spec = new VirtualServiceSpec();
         spec.setHosts(Collections.singletonList("10.246.15.246"));
+        spec.setGateways(Collections.singletonList("istio-system/ingress-prod"));
 
+        final List<HTTPRoute> httpRouteList = new ArrayList<>();
+        final HTTPRoute httpRoute = new HTTPRoute();
+        final List<HTTPMatchRequest> httpMatchRequests = new ArrayList<>();
+        final HTTPMatchRequest httpMatchRequest = new HTTPMatchRequest();
+        httpMatchRequest.setUri(new StringMatch(new StringMatchRegex("/systemcontext(/|$)(.*)")));
+        httpMatchRequests.add(httpMatchRequest);
+        httpRoute.setMatch(httpMatchRequests);
+
+        final List<HTTPRouteDestination> routeDestinations = new ArrayList<>();
+        final HTTPRouteDestination routeDestination = new HTTPRouteDestination();
+        final Destination destination = new Destination(serviceName, new PortSelector(8080), null);
+        routeDestination.setDestination(destination);
+        routeDestinations.add(routeDestination);
+        httpRoute.setRoute(routeDestinations);
+
+        httpRouteList.add(httpRoute);
+        spec.setHttp(httpRouteList);
         return spec;
     }
 
@@ -87,6 +108,4 @@ public class IstioServiceManager {
         metaData.setNamespace(namespace);
         return metaData;
     }
-
-
 }
