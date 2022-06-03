@@ -48,11 +48,7 @@ public class DeploymentManager {
             body.setKind("Deployment");
             body.setMetadata(getDeploymentMetaData(deploymentName));
             body.setSpec(getDeploymentSpec(deploymentName));
-            final V1DeploymentList v1DeploymentList = kubernetesAppsApi.listNamespacedDeployment(nameSpace, null, null, null,
-                    "metadata.name=systemcontext",
-                    null, null, null, null, null,
-                    null);
-            if (v1DeploymentList.getItems().size() > 0) {
+            if (checkIfDeploymentExists(deploymentName, nameSpace)) {
                 System.out.println("Deployment with name " + deploymentName + " in namespace" + nameSpace + "already exists");
             } else {
                 kubernetesAppsApi.createNamespacedDeployment(nameSpace, body, null, null, null, null);
@@ -65,7 +61,19 @@ public class DeploymentManager {
         System.out.println("Created deployment " + deploymentName + " in namespace " + nameSpace);
     }
 
-    public void deleteDeploymentInNamespace(final String systemcontext, final String ingestion) {
+    public void deleteDeploymentInNamespace(final String deploymentName, final String namepspace) {
+        try {
+            if (checkIfDeploymentExists(deploymentName, namepspace)) {
+                System.out.println("Deleting deployment with name " + deploymentName + " with namespace " + namepspace);
+                kubernetesAppsApi.deleteNamespacedDeployment(deploymentName, namepspace, null, null, null, null, null, null);
+                System.out.println("Deleted deployment with name " + deploymentName + " with namespace " + namepspace);
+            } else {
+                System.out.println("Deployment with name " + deploymentName + " with namespace " + namepspace + " doesn't exist");
+            }
+        } catch (final ApiException e) {
+            System.out.println("Could not Delete deployment with name " + deploymentName + " with namespace " + namepspace);
+            e.printStackTrace();
+        }
     }
 
     private V1DeploymentSpec getDeploymentSpec(final String deploymentName) {
@@ -240,6 +248,23 @@ public class DeploymentManager {
         metaData.setName(deploymentName);
         metaData.setLabels(Collections.singletonMap("app", deploymentName));
         return metaData;
+    }
+
+    private boolean checkIfDeploymentExists(final String deploymentName, final String namespace) {
+        final V1DeploymentList v1DeploymentList;
+        try {
+            v1DeploymentList = kubernetesAppsApi.listNamespacedDeployment(namespace, null, null, null,
+                    "metadata.name=systemcontext",
+                    null, null, null, null, null,
+                    null);
+            if (v1DeploymentList.getItems().size() > 0) {
+                return true;
+            }
+        } catch (final ApiException e) {
+            System.out.println("Could not validate if deployment " + deploymentName + " exists in namepsace " + namespace);
+            e.printStackTrace();
+        }
+        return false;
     }
 
 }
