@@ -1,5 +1,8 @@
 package com.example.service;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.stereotype.Service;
 
 import io.kubernetes.client.openapi.ApiException;
@@ -29,6 +32,12 @@ public class NamespaceManager {
                 final V1Namespace ingestionNamespace = new V1Namespace();
                 final V1ObjectMeta namespaceMetaData = new V1ObjectMeta();
                 namespaceMetaData.setName(namespace);
+
+                final Map<String, String> labels = new HashMap<>();
+                // Enable Istio i.e. service mesh
+                labels.put("istio-injection", "enabled");
+
+                namespaceMetaData.setLabels(labels);
                 ingestionNamespace.setMetadata(namespaceMetaData);
                 kubernetesCoreApi.createNamespace(ingestionNamespace, null, null, null, null);
                 System.out.println("Namespace created successfully");
