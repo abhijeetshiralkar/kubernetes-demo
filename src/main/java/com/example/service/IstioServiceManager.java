@@ -35,7 +35,7 @@ public class IstioServiceManager {
     public void createIngressService(final String serviceName, final String namespace) {
         System.out.println("Creating Ingress service " + serviceName + " in namespace " + namespace);
         final VirtualService virtualService = new VirtualServiceBuilder().withApiVersion(API_VERSION).withKind(SERVICE_KIND)
-                .withMetadata(getIngressServiceMetaData(serviceName, namespace)).withSpec(getIngressServiceSpec(serviceName))
+                .withMetadata(getIngressServiceMetaData(serviceName, namespace)).withSpec(getIngressServiceSpec())
                 .build();
 
         istioClient.v1beta1().virtualServices().inNamespace(namespace).createOrReplace(virtualService);
@@ -100,7 +100,7 @@ public class IstioServiceManager {
         return metaData;
     }
 
-    private VirtualServiceSpec getIngressServiceSpec(final String serviceName) {
+    private VirtualServiceSpec getIngressServiceSpec() {
         final VirtualServiceSpec spec = new VirtualServiceSpec();
         spec.setHosts(Collections.singletonList("10.246.15.246"));
         spec.setGateways(Collections.singletonList("istio-system/ingress-prod"));
@@ -115,7 +115,7 @@ public class IstioServiceManager {
 
         final List<HTTPRouteDestination> routeDestinations = new ArrayList<>();
         final HTTPRouteDestination routeDestination = new HTTPRouteDestination();
-        final Destination destination = new Destination(serviceName, new PortSelector(8080), null);
+        final Destination destination = new Destination("systemcontext", new PortSelector(8080), null);
         routeDestination.setDestination(destination);
         routeDestinations.add(routeDestination);
         httpRoute.setRoute(routeDestinations);

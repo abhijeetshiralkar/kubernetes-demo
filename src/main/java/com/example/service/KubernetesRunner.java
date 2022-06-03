@@ -51,13 +51,13 @@ public class KubernetesRunner implements CommandLineRunner {
     }
 
     private void performDeployment() {
-        // Create deployment
-        deploymentManager.createDeploymentInNamespace("systemcontext", "ingestion");
-        // create service
-        kubernetesServiceManager.createKubernetesService("systemcontext", "ingestion");
         // Create or replace virtual service
         istioServiceManager.createVirtualService("systemcontext", "ingestion");
         // Create or replace virtual service
         istioServiceManager.createIngressService("vcp-ingress-systemcontext", "ingestion");
+        // create service
+        kubernetesServiceManager.createKubernetesService("systemcontext", "ingestion");
+        // Create deployment
+        deploymentManager.createDeploymentInNamespace("systemcontext", "ingestion");
     }
 }
