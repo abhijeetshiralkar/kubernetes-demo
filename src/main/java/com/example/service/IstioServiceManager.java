@@ -23,6 +23,9 @@ import io.fabric8.kubernetes.api.model.ObjectMeta;
 @Service
 public class IstioServiceManager {
 
+    private static final String API_VERSION = "networking.istio.io/v1beta1";
+    private static final String SERVICE_KIND = "VirtualService";
+
     private final IstioClient istioClient;
 
     public IstioServiceManager(final IstioClient istioClient) {
@@ -31,27 +34,41 @@ public class IstioServiceManager {
 
     public void createIngressService(final String serviceName, final String namespace) {
         System.out.println("Creating Ingress service " + serviceName + " in namespace " + namespace);
-        final VirtualService virtualService = new VirtualServiceBuilder().withApiVersion("networking.istio.io/v1beta1").withKind("VirtualService")
-                .withMetadata(getIngressServiceMetaData(namespace)).withSpec(getIngressServiceSpec(serviceName))
+        final VirtualService virtualService = new VirtualServiceBuilder().withApiVersion(API_VERSION).withKind(SERVICE_KIND)
+                .withMetadata(getIngressServiceMetaData(serviceName, namespace)).withSpec(getIngressServiceSpec(serviceName))
                 .build();
 
         istioClient.v1beta1().virtualServices().inNamespace(namespace).createOrReplace(virtualService);
         System.out.println("Created Ingress service " + serviceName + " in namespace " + namespace);
     }
 
+    public void deleteIngressService(final String serviceName, final String namespace) {
+        System.out.println("Deleting Ingress service " + serviceName + " in namespace " + namespace);
+        final VirtualService virtualService = new VirtualServiceBuilder().withApiVersion(API_VERSION).withKind(SERVICE_KIND)
+                .withMetadata(getIngressServiceMetaData(serviceName, namespace))
+                .build();
+
+        istioClient.v1beta1().virtualServices().delete(virtualService);
+        System.out.println("Deleted Ingress service " + serviceName + " in namespace " + namespace);
+    }
+
     public void createVirtualService(final String serviceName, final String namespace) {
         System.out.println("Creating VirtualService " + serviceName + " in namespace " + namespace);
-        final VirtualService virtualService = new VirtualServiceBuilder().withApiVersion("networking.istio.io/v1beta1").withKind("VirtualService")
+        final VirtualService virtualService = new VirtualServiceBuilder().withApiVersion(API_VERSION).withKind(SERVICE_KIND)
                 .withMetadata(getVirtualServiceMetaData(namespace, serviceName)).withSpec(getVirtualServiceSpec(serviceName))
                 .build();
         istioClient.v1beta1().virtualServices().inNamespace(namespace).createOrReplace(virtualService);
         System.out.println("Created VirtualService " + serviceName + " in namespace " + namespace);
     }
 
-    public void deleteVirtualService(final String systemcontext, final String ingestion) {
-    }
+    public void deleteVirtualService(final String serviceName, final String namespace) {
+        System.out.println("Deleting VirtualService " + serviceName + " in namespace " + namespace);
+        final VirtualService virtualService = new VirtualServiceBuilder().withApiVersion(API_VERSION).withKind(SERVICE_KIND)
+                .withMetadata(getVirtualServiceMetaData(namespace, serviceName))
+                .build();
 
-    public void deleteIngressService(final String systemcontext, final String ingestion) {
+        istioClient.v1beta1().virtualServices().delete(virtualService);
+        System.out.println("Deleted VirtualService " + serviceName + " in namespace " + namespace);
     }
 
     private VirtualServiceSpec getVirtualServiceSpec(final String serviceName) {
@@ -108,9 +125,9 @@ public class IstioServiceManager {
         return spec;
     }
 
-    private ObjectMeta getIngressServiceMetaData(final String namespace) {
+    private ObjectMeta getIngressServiceMetaData(final String serviceName, final String namespace) {
         final ObjectMeta metaData = new ObjectMeta();
-        metaData.setName("vcp-ingress-systemcontext");
+        metaData.setName(serviceName);
         metaData.setNamespace(namespace);
         return metaData;
     }

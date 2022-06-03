@@ -6,8 +6,11 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import com.google.gson.JsonSyntaxException;
+
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
+import io.kubernetes.client.openapi.models.V1DeleteOptions;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Service;
 import io.kubernetes.client.openapi.models.V1ServiceList;
@@ -31,10 +34,7 @@ public class KubernetesServiceManager {
             serviceBody.setKind("Service");
             serviceBody.setMetadata(getServiceMetaData(serviceName, namespace));
             serviceBody.setSpec(getServiceSpec(serviceName));
-            final V1ServiceList serviceList = kubernetesCoreApi.listNamespacedService(namespace, null, null, null, "metadata.name=systemcontext",
-                    null, null, null, null, null,
-                    null);
-            if (serviceList.getItems().size() > 0) {
+            if (checkIfServiceExistsInNamespace(serviceName, namespace)) {
                 System.out.println("Service " + serviceName + " already exists in namespace " + namespace + " replacing it");
             } else {
                 kubernetesCoreApi.createNamespacedService(namespace, serviceBody, null, null, null, null);
@@ -46,7 +46,46 @@ public class KubernetesServiceManager {
         }
     }
 
-    public void deleteKubernetesService(final String systemcontext, final String ingestion) {
+    public void deleteKubernetesService(final String serviceName, final String namespace) {
+        if (checkIfServiceExistsInNamespace(serviceName, namespace)) {
+            try {
+                System.out.println("Deleting service " + serviceName + "from namespace " + namespace);
+                kubernetesCoreApi.deleteNamespacedService(serviceName, namespace, null, null, null, null, null, new V1DeleteOptions());
+                System.out.println("Deleted service " + serviceName + "from namespace " + namespace);
+            } catch (final ApiException e) {
+                System.out.println("Exception ocurred while deleting " + serviceName + "from namespace " + namespace);
+                e.printStackTrace();
+            } catch (final JsonSyntaxException e) {
+                if (checkIfServiceExistsInNamespace(serviceName, namespace)) {
+                    // There is an exception message while deleting service "com.google.gson.JsonSyntaxException: java.lang.IllegalStateException:
+                    // Expected BEGIN_OBJECT but was STRING at line 1 column 60 path $.status" which occurs during parsing the response internally by
+                    // the kubernetes client library
+                    // But in reality the service is deleted successfully. So verify if the service exists.
+                    System.out.println("Exception ocurred while deleting " + serviceName + "from namespace " + namespace);
+                    e.printStackTrace();
+                } else {
+                    System.out.println("Deleted service " + serviceName + " from namespace " + namespace);
+                }
+            }
+        } else {
+            System.out.println("Did not delete service " + serviceName + " from namespace " + namespace + " as it does not exist");
+        }
+    }
+
+    private boolean checkIfServiceExistsInNamespace(final String serviceName, final String namespace) {
+        final V1ServiceList serviceList;
+        try {
+            serviceList = kubernetesCoreApi.listNamespacedService(namespace, null, null, null, "metadata.name=" + serviceName,
+                    null, null, null, null, null,
+                    null);
+            if (serviceList.getItems().size() > 0) {
+                return true;
+            }
+        } catch (final ApiException ex) {
+            System.out.println("Could not validate if service " + serviceName + " exists in namepsace " + namespace);
+            ex.printStackTrace();
+        }
+        return false;
     }
 
     private V1ServiceSpec getServiceSpec(final String serviceName) {

@@ -48,7 +48,7 @@ public class DeploymentManager {
             body.setKind("Deployment");
             body.setMetadata(getDeploymentMetaData(deploymentName));
             body.setSpec(getDeploymentSpec(deploymentName));
-            if (checkIfDeploymentExists(deploymentName, nameSpace)) {
+            if (checkIfDeploymentExistsInNamespace(deploymentName, nameSpace)) {
                 System.out.println("Deployment with name " + deploymentName + " in namespace" + nameSpace + "already exists");
             } else {
                 kubernetesAppsApi.createNamespacedDeployment(nameSpace, body, null, null, null, null);
@@ -63,7 +63,7 @@ public class DeploymentManager {
 
     public void deleteDeploymentInNamespace(final String deploymentName, final String namepspace) {
         try {
-            if (checkIfDeploymentExists(deploymentName, namepspace)) {
+            if (checkIfDeploymentExistsInNamespace(deploymentName, namepspace)) {
                 System.out.println("Deleting deployment with name " + deploymentName + " with namespace " + namepspace);
                 kubernetesAppsApi.deleteNamespacedDeployment(deploymentName, namepspace, null, null, null, null, null, null);
                 System.out.println("Deleted deployment with name " + deploymentName + " with namespace " + namepspace);
@@ -250,7 +250,7 @@ public class DeploymentManager {
         return metaData;
     }
 
-    private boolean checkIfDeploymentExists(final String deploymentName, final String namespace) {
+    private boolean checkIfDeploymentExistsInNamespace(final String deploymentName, final String namespace) {
         final V1DeploymentList v1DeploymentList;
         try {
             v1DeploymentList = kubernetesAppsApi.listNamespacedDeployment(namespace, null, null, null,

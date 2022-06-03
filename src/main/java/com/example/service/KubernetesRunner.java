@@ -25,10 +25,7 @@ public class KubernetesRunner implements CommandLineRunner {
 
     @Override
     public void run(final String... args) throws Exception {
-        // Create namespace if it doesnot exist
-        namespaceManager.createNamespace("ingestion");
-        // Create configmap if it doesnot exist. If it exists replace it
-        configMapManager.createconfigMap("ingestion", "mongodb-cm");
+        createNamespaceAndConfigMap("ingestion");
 
         // Cleanup deployments and services
         performCleanup();
@@ -37,11 +34,20 @@ public class KubernetesRunner implements CommandLineRunner {
         performDeployment();
     }
 
+    private void createNamespaceAndConfigMap(final String ingestion) {
+        // Create namespace if it doesnot exist
+        namespaceManager.createNamespace("ingestion");
+        // Create configmap if it doesnot exist. If it exists replace it
+        configMapManager.createconfigMap("ingestion", "mongodb-cm");
+    }
+
     private void performCleanup() {
+        // Delete deployment
         deploymentManager.deleteDeploymentInNamespace("systemcontext", "ingestion");
+        // Delete kubernetes service
         kubernetesServiceManager.deleteKubernetesService("systemcontext", "ingestion");
         istioServiceManager.deleteVirtualService("systemcontext", "ingestion");
-        istioServiceManager.deleteIngressService("systemcontext", "ingestion");
+        istioServiceManager.deleteIngressService("vcp-ingress-systemcontext", "ingestion");
     }
 
     private void performDeployment() {
@@ -52,6 +58,6 @@ public class KubernetesRunner implements CommandLineRunner {
         // Create or replace virtual service
         istioServiceManager.createVirtualService("systemcontext", "ingestion");
         // Create or replace virtual service
-        istioServiceManager.createIngressService("systemcontext", "ingestion");
+        istioServiceManager.createIngressService("vcp-ingress-systemcontext", "ingestion");
     }
 }
